@@ -245,88 +245,94 @@
        
     </div>
    <script>
-const textEl = document.getElementById("breathText");
+        const textEl = document.getElementById("breathText");
 
-let relaxSound = new Audio("audio/deep-breathing.mp3");
-relaxSound.loop = true;
-relaxSound.volume = 0;
+        let relaxSound = new Audio("audio/deep-breathing.mp3");
+        relaxSound.loop = true;
+        relaxSound.volume = 0;
 
-let breathingInterval = null;
-let fadeInterval = null;
+        let breathingInterval = null;
+        let fadeInterval = null;
 
 
-function fadeVolume(target, duration) {
-    clearInterval(fadeInterval);
-
-    const stepTime = 100;
-    const steps = duration / stepTime;
-    const volumeStep = (target - relaxSound.volume) / steps;
-
-    fadeInterval = setInterval(() => {
-        relaxSound.volume += volumeStep;
-
-        if (
-            (volumeStep > 0 && relaxSound.volume >= target) ||
-            (volumeStep < 0 && relaxSound.volume <= target)
-        ) {
-            relaxSound.volume = target;
+        function fadeVolume(target, duration) {
             clearInterval(fadeInterval);
+
+            const stepTime = 100;
+            const steps = duration / stepTime;
+            const volumeStep = (target - relaxSound.volume) / steps;
+
+            fadeInterval = setInterval(() => {
+                relaxSound.volume += volumeStep;
+
+                if (
+                    (volumeStep > 0 && relaxSound.volume >= target) ||
+                    (volumeStep < 0 && relaxSound.volume <= target)
+                ) {
+                    relaxSound.volume = target;
+                    clearInterval(fadeInterval);
+                }
+            }, stepTime);
         }
-    }, stepTime);
-}
 
 
-function inhale() {
-    textEl.innerText = "Breathe In";
-    fadeVolume(0.6, 6000);
-}
+        function inhale() {
+            textEl.innerText = "Breathe In";
+            fadeVolume(0.6, 6000);
+        }
 
-function hold() {
-    textEl.innerText = "Hold";
-}
+        function hold() {
+            textEl.innerText = "Hold";
+        }
 
-function exhale() {
-    textEl.innerText = "Breathe Out";
-    fadeVolume(0.2, 6000);
-}
-
-
-function startBreathing() {
-    if (breathingInterval) return;
-    relaxSound.play();
-
-    inhale();
-    setTimeout(hold, 6000);
-    setTimeout(exhale, 8000);
-
-    breathingInterval = setInterval(() => {
-        inhale();
-        setTimeout(hold, 6000);
-        setTimeout(exhale, 8000);
-    }, 14000);
-}
+        function exhale() {
+            textEl.innerText = "Breathe Out";
+            fadeVolume(0.2, 6000);
+        }
+        function getAdaptiveInterval() {
+            const lastMood = localStorage.getItem("userMood"); // Welcome page se save kiya hua
+            if (lastMood === 'awful' || lastMood === 'struggling') return 18000; // Slow deep breathing for stress
+            return 14000; // Normal interval
+        }
 
 
-function stopBreathing() {
-    clearInterval(breathingInterval);
-    breathingInterval = null;
+        function startBreathing() {
+            let interval = getAdaptiveInterval();
+            if (breathingInterval) return;
+            relaxSound.play();
 
-    fadeVolume(0, 3000);
+            inhale();
+            setTimeout(hold, 6000);
+            setTimeout(exhale, 8000);
 
-    setTimeout(() => {
-        relaxSound.pause();
-        relaxSound.currentTime = 0;
-        textEl.innerText = "Relax";
-    }, 3000);
-}
-(function() {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-        
-        window.location.href = "loginPage.html";
-    }
-})();
-</script>
+            breathingInterval = setInterval(() => {
+                inhale();
+                setTimeout(hold, 6000);
+                setTimeout(exhale, 8000);
+            }, 14000);
+        }
+
+
+        function stopBreathing() {
+            clearInterval(breathingInterval);
+            breathingInterval = null;
+
+            fadeVolume(0, 3000);
+
+            setTimeout(() => {
+                relaxSound.pause();
+                relaxSound.currentTime = 0;
+                textEl.innerText = "Relax";
+            }, 3000);
+        }
+        (function() {
+            const userEmail = localStorage.getItem("userEmail");
+            if (!userEmail) {
+                
+                window.location.href = "loginPage.html";
+            }
+        })();
+    </script>
 
 
 </body>

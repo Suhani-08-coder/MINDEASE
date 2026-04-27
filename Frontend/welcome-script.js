@@ -112,9 +112,13 @@ async function submitNote() {
         }
 
     } catch (e) {
-        aiBox.innerText = "The connection is silent right now. Please check your server.";
-    } finally {
-        sendBtn.innerText = "Release";
+        const simpleResponses = {
+            "hello": "Namaste! Main aapka MindEase companion hoon.",
+            "help": "Main aapko meditation aur journaling mein help kar sakta hoon.",
+            "sad": "Main samajh sakta hoon. Kya aap music sunna chahenge?"
+        };
+        let response = simpleResponses[thought.toLowerCase()] || "Main sun raha hoon, batate rahiye...";
+        aiBox.innerHTML = response;
     }
 }
 window.onload = function() {

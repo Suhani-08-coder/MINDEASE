@@ -205,32 +205,47 @@
     </div>
 
     <script>
-        const BACKEND_URL = "http://127.0.0.1:5000/api";
+       const BACKEND_URL = "http://127.0.0.1:5000/api";
         const userEmail = localStorage.getItem("userEmail");
+
+        // Page load hote hi journals fetch karo
+        document.addEventListener('DOMContentLoaded', loadJournals);
 
         function saveJournal() {
             const thought = document.getElementById("journalText").value;
             const mood = document.getElementById("journalMood").value;
+            const statusEl = document.getElementById("status");
 
             if (!thought.trim()) return alert("Please write something before saving.");
-            if (!userEmail) return alert("You must be logged in to save entries.");
+            if (!userEmail) return alert("Session expired. Please login again.");
 
             fetch(`${BACKEND_URL}/save-journal`, {
                 method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ thought, mood, email: userEmail })
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    thought: thought, 
+                    mood: mood, 
+                    email: userEmail 
+                })
             })
-            .then(res => {
-                if (!res.ok) throw new Error('Network response was not ok');
-                return res.json();
-            })
-            .then(() => {
-                document.getElementById("status").classList.remove("hidden");
-                document.getElementById("journalText").value = "";
-                setTimeout(() => document.getElementById("status").classList.add("hidden"), 3000);
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                
+                // Success Message dikhao
+                statusEl.classList.remove("hidden");
+                document.getElementById("journalText").value = ""; // Textarea khali karo
+                
+                // List ko refresh karo turant
                 loadJournals();
+
+                // 3 second baad message hide karo
+                setTimeout(() => statusEl.classList.add("hidden"), 3000);
             })
-            .catch(err => console.error("Error saving journal:", err));
+            .catch(err => {
+                console.error("Save Error:", err);
+                alert("Saving failed. Check backend connection.");
+            });
         }
 
         function loadJournals() {
@@ -240,40 +255,39 @@
             .then(res => res.json())
             .then(data => {
                 const box = document.getElementById("journalList");
-                box.innerHTML = data.length ? "" : '<p class="opacity-40 italic">Your story begins here...</p>';
+                box.innerHTML = ""; // Pehle purani list saaf karo
+
+                if (data.length === 0) {
+                    box.innerHTML = '<p class="opacity-40 italic">No reflections yet. Start writing today...</p>';
+                    return;
+                }
 
                 data.forEach(j => {
-                    box.innerHTML += `
-                        <div class="journal-entry">
-                            <p class="font-serif text-lg leading-relaxed mb-4">${j.thought}</p>
-                            <div class="flex justify-between items-center text-xs uppercase tracking-widest opacity-50">
-                                <span>${j.mood} • ${j.date}</span>
-                                <button onclick="deleteJournal('${j.id}')" class="text-red-300 hover:text-red-500 transition-colors">
-                                    Remove
-                                </button>
+                        box.innerHTML += `
+                            <div class="journal-entry mb-4 p-4 border border-white/10 rounded-xl bg-white/5">
+                                <p class="font-serif text-lg leading-relaxed mb-4">${j.thought}</p>
+                                <div class="flex justify-between items-center text-xs uppercase tracking-widest opacity-50">
+                                    <span>${j.mood} • ${j.date}</span>
+                                    <button onclick="deleteJournal('${j.id}')" class="text-red-400 hover:text-red-600 transition">
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                });
-            })
-            .catch(err => console.error("Error loading journals:", err));
-        }
+                        `;
+                    });
+                })
+                .catch(err => console.error("Load Error:", err));
+            }
 
-        function deleteJournal(id) {
-            if (confirm("Are you sure you want to remove this entry?")) {
-                fetch(`${BACKEND_URL}/journal/${id}`, { method: "DELETE" })
-                .then(() => loadJournals())
-                .catch(err => console.error("Error deleting journal:", err));
-            }
+         function deleteJournal(id) {
+            if (!confirm("Are you sure?")) return;
+
+            fetch(`${BACKEND_URL}/journal/${id}`, { method: "DELETE" })
+            .then(() => loadJournals()) // Delete ke baad phir refresh
+            .catch(err => console.error("Delete Error:", err));
         }
-        
-        (function() {
-            const userEmail = localStorage.getItem("userEmail");
-            if (!userEmail) {
                 
-                window.location.href = "loginPage.html";
-            }
-        })();
+           
     </script>
 </body>
 </html>
